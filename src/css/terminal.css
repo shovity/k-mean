@@ -1,0 +1,76 @@
+#terminal {
+  overflow-y: scroll;
+  position: fixed;
+  bottom: 0;
+  height: 220px;
+  width: 100%;
+  background: #09171C;
+  margin: 0;
+  padding: 5px;
+  color: #d8e4dd;
+  font-family: sans-serif;
+  font-size: 13px;
+  /*line-height: 20px;*/
+}
+
+
+.container {
+  width: 100%;
+  height: 100vh;
+  margin: 7px 0 0 0;
+  position: absolute;
+  overflow-y:auto;
+  overflow-x: hidden;
+}
+
+.box {
+  margin: 0px 7px 7px 7px;
+}
+
+.cmd::before {
+  content: "root@k-mean:~# ";
+  font-family: monospace;
+  color: #337AB7;
+}
+
+#cmd {
+  width: 546px;
+  height: 23px;
+  background: none;
+  border: 0;
+  color: #d8e4dd;
+  font-size: 13px;
+  line-height: 23px;
+  outline: none;
+  word-spacing: 7px;
+}
+
+.result {
+  cursor: text;
+  word-wrap: break-word;
+}
+
+.primary {
+  color: #337AB7;
+}
+
+.danger {
+  color: #D9534F;
+}
+
+.success {
+  color: #5CB85C;
+}
+
+.warning {
+  color: #F0AD4E;
+}
+
+.info {
+  color: #5BC0DE;
+}
+
+p {
+  margin: 0 0 0 7px;
+  padding: 0;
+}

@@ -1,0 +1,29 @@
+* {
+  outline: none;
+  box-sizing: border-box;
+}
+
+html {
+  overflow: hidden;
+}
+
+body {
+  background: #aaa;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#censor {
+  background: #fff;
+  position: fixed;
+  top: 0px;
+  left: calc(50% - 50px);
+  width: 100px;
+  height: 25px;
+}
+
+#visual {
+  background: #fff;
+}
