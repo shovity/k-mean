@@ -171,6 +171,10 @@ function serviceCmd(request)
       }
       break
 
+    case 's':
+      window.sorting()
+      break
+
     default:
       addLog('Err: command not found! "help" to see docs', 'danger')
   }
