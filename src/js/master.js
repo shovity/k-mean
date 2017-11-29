@@ -114,7 +114,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   window.sorting = async function () {
-    let delay = 0
+    let delay = 100
     for (let i = 0, length = group.length; i < length - 1; i++) {
       for (let j = i + 1; j < length; j++) {
 
