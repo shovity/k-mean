@@ -5,20 +5,22 @@
   <title>Visualizing K-Means Clustering</title>
 </head>
 <body>
+  <!-- Visualizing -->
   <canvas id="visual">Your browser not "ho tro" html5 canvas</canvas>
   <div id="censor"></div>
-
+  
+  <!-- Terminal -->
   <label id="terminal" for="cmd">
   	<div id="progress"></div>
   	<label for="cmd" id="container">
   		<code id="result"></code>
   		<div class="box cmd">
-  			<input id="cmd" autocomplete="off" autofocus />
+  			<input id="cmd" autocomplete="false" spellcheck="false" autofocus />
   		</div>
   	</label>
   </label>
   
-
+  <!-- Include javascript -->
   <script src="master.bundle.js"></script>
 </body>
 </html>

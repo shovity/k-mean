@@ -17323,7 +17323,6 @@ function updateCenters(group, centers) {
 
 module.exports = { initCenters, assignLabel, updateCenters }
 
-
 /***/ }),
 /* 126 */
 /***/ (function(module, exports) {
@@ -31007,17 +31006,17 @@ module.exports = function(Chart) {
 
 const DOCS = 
 `
-clear     XX
-show      YY
-sort
-update
----------------------
-random
-input
-init-centers
-update-centers
-assign-label
-auto`
+  clear
+  show
+  sort
+  update
+  -------------------
+  random         / r
+  input          / i       point11-point12 point21-point22 ... / value1 value2 ...
+  init-centers   / ic
+  update-centers / uc
+  assign-label   / al
+  auto           / a       [-d delay] [-n numberCluster] [-c centers]`
 
 
 
@@ -31052,8 +31051,9 @@ function serviceCmd(request)
   const params = request.split(' ')
 
   switch (params[0]) {
+    case 'h':
     case 'help':
-      addLog(DOCS.replace(/\n/g, '<br>'))
+      addLog('<pre>' + DOCS + '</pre>')
       break
 
     case 'clear':
@@ -31061,10 +31061,22 @@ function serviceCmd(request)
       break
 
     case 'show':
-      const result = `<prev>${JSON.stringify(group)}</prev>`
-      addLog(result)
+      let mesg = '<p><table>'
+      mesg += `<tr> <th>ID</th> <th>Point1</th> <th>Point2</th> <th>Value</th> <th>Cluster</th> </tr>`
+      window.group.forEach((e, ei) => {
+        mesg += `<tr>
+          <td>${ei}</td>
+          <td>${e.point1}</td>
+          <td>${e.point2}</td>
+          <td>${e.value}</td>
+          <td>${e.label === undefined? 'no cluster' : e.label}</td>
+        </tr>`
+      })
+      mesg += '</table></p>'
+      addLog(mesg)
       break
 
+    case 'it':
     case 'init-centers':
       if (params[1] && +params[1] > 1 && +params[1] < 13) {
         window.centers = initCenters(window.group.length, +params[1]).sort((x, y) => x - y)
@@ -31075,33 +31087,47 @@ function serviceCmd(request)
       }
       break
 
+    case 'i':
     case 'input':
       window.group = []
       window.centers = []
-      params.forEach(e => {
-        if (!Number.isNaN(+e)) window.group.push({ value: +e })
+      params.forEach(e => {  
+        if (!Number.isNaN(+e)) {
+          window.group.push({ value: +e })
+        } else if (e.split('-').length === 2) {
+          const dualPoint = e.split('-')
+          if (!Number.isNaN(+dualPoint[0]) && !Number.isNaN(+dualPoint[1])) {
+            window.group.push({
+              point1: dualPoint[0],
+              point2: dualPoint[1],
+              value: Math.floor((+dualPoint[0]*0.25 + +dualPoint[1]*0.01)*100) / 100
+            })
+          }
+        }
       })
+
       addLog('input group success!', 'success')
-      addLog('group = <span class="info">' + JSON.stringify(params.slice(1).map(e => +e)) + '</span>')
+      addLog('group = <span class="info">' + JSON.stringify(window.group) + '</span>')
       updateChart()
       break
 
     case 'sort':
       // Set centers label
-      centers.forEach((center, centerIndex) => window.group[center].center = centerIndex)
+      window.centers.forEach((center, centerIndex) => window.group[center].center = centerIndex)
 
       // Sort
       group.sort((x, y) => x.value - y.value)
 
       // Update centers
       group.forEach((e, ei) => {
-        if (e.center != undefined) centers[e.center] = ei
+        if (e.center != undefined) window.centers[e.center] = ei
       })
 
       updateChart()
       addLog('group is sorted', 'success')
       break
 
+    case 'uc':
     case 'update-centers':
       const oc = window.centers
       uCenters()
@@ -31110,6 +31136,7 @@ function serviceCmd(request)
       addLog(` ===> centers change: [<span class="info">${oc}</span>] => [<span class="primary">${window.centers}</span>] `)
       break
 
+    case 'al':
     case 'assign-label':
       const count = aLabel()
       window.stop = count === 0
@@ -31126,22 +31153,41 @@ function serviceCmd(request)
       break
 
     // auto -d 100 (ms)
+    case 'a':
     case 'auto':
-      const i = params.indexOf('-d')
-      let delay = +params[i+1]
-      if (!(i !== -1 && !Number.isNaN(delay) && delay > -1 && delay < 1e9)) delay = 1200
+      // handle option -c
+      const ic = params.indexOf('-c')
+      let centers = null
+      if (ic !== -1) centers = eval(params[ic+1])
+      if (!(ic !== -1 && Array.isArray(centers) && centers.length > 1 && centers.length < 12)) centers = null
 
+      // handle option -d
+      const id = params.indexOf('-d')
+      let delay = +params[id+1]
+      if (!(id !== -1 && !Number.isNaN(delay) && delay > -1 && delay < 1e9)) delay = 1200
+
+      // handle option -n. only run if lost -c
       const j = params.indexOf('-n')
       let nCluster = +params[j+1]
       if (!(j !== -1 && !Number.isNaN(nCluster) && nCluster > 1 && nCluster < window.group.length-1)) {
         nCluster = Math.floor(window.group.length / 5)
+        if (nCluster > 12) nCluster = 12
+        if (nCluster < 2) nCluster = 2
       }
 
       addLog(`start auto solving...`)
       addLog(` ===> set step delay = <span class="primary">${delay}</span>(ms)`)
-      addLog(` ===> set number of cluster = <span class="primary">${nCluster}</span>`)
+      
 
-      serviceCmd('init-centers ' + nCluster)
+      if (centers) {
+        addLog(` ===> set centers = <span class="primary">${JSON.stringify(centers)}</span>`)
+        window.centers = centers;
+        updateChart();
+      } else {
+        addLog(` ===> set number of cluster = <span class="primary">${nCluster}</span>`)
+        serviceCmd('init-centers ' + nCluster)
+      }
+
       let flag = true
       const interval = setInterval(() => {
         if (flag) {
@@ -31159,6 +31205,7 @@ function serviceCmd(request)
       break
 
     //random 12
+    case 'r':
     case 'random':
       const n = +params[1]
       if (Number.isNaN(n) || n < 0) {
@@ -31167,11 +31214,10 @@ function serviceCmd(request)
         window.group = []
         window.centers = []
         for (let i = 0; i < n; i++) {
-          window.group.push(
-            {
-              value: Math.floor(Math.random()*1000+1) / 100
-            }
-          )
+          const point1 = Math.floor(Math.random()*5)
+          const point2 = Math.floor(Math.random()*101)
+          const value = Math.floor((point1*0.25 + point2*0.01) * 100) / 100
+          window.group.push({ point1, point2, value })
         }
         addLog('random group complete!', 'success')
         updateChart()
@@ -31245,7 +31291,7 @@ exports = module.exports = __webpack_require__(126)(undefined);
 
 
 // module
-exports.push([module.i, "* {\r\n  outline: none;\r\n  box-sizing: border-box;\r\n}\r\n\r\nhtml {\r\n  overflow: hidden;\r\n}\r\n\r\nbody {\r\n  background: #aaa;\r\n  margin: 0;\r\n  width: 100vw;\r\n  height: 100vh;\r\n  overflow: hidden;\r\n}\r\n\r\n#censor {\r\n  background: #fff;\r\n  position: fixed;\r\n  top: 0px;\r\n  left: calc(50% - 50px);\r\n  width: 100px;\r\n  height: 25px;\r\n}\r\n\r\n#visual {\r\n  background: #fff;\r\n}\r\n", ""]);
+exports.push([module.i, "* {\r\n  outline: none;\r\n  box-sizing: border-box;\r\n}\r\n\r\nhtml {\r\n  overflow: hidden;\r\n}\r\n\r\nbody {\r\n  background: #aaa;\r\n  margin: 0;\r\n  width: 100vw;\r\n  height: 100vh;\r\n  overflow: hidden;\r\n}\r\n\r\n#censor {\r\n  background: #fff;\r\n  position: fixed;\r\n  top: 0px;\r\n  left: calc(50% - 50px);\r\n  width: 100px;\r\n  height: 25px;\r\n}\r\n\r\n#visual {\r\n  background: #fff;\r\n}\r\n\r\ntable {\r\n  margin-left: 20px;\r\n}\r\n\r\ntd, th {\r\n  padding: 0 10px;\r\n}\r\n\r\nth {\r\n  border-bottom: 1px #ddd solid;\r\n}", ""]);
 
 // exports
 
